@@ -1,0 +1,12 @@
+SheFF: Changes
+
+—Update 0
+
+——Revision 1, 02/17/2023.
+- Abbreviative key mapping in main menu.
+- Fixed backslash escapes with `readAndTrim`.
+- Fixed single-digit fields with `readTime`.
+- Fixed SoXR precision range.
+
+——Revision 0, 12/31/2022.
+- Initial release.

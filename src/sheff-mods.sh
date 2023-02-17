@@ -75,7 +75,7 @@ SHM.doAresample() {
     SHF.addFilterOpts 'out_sample_rate' "${REPLY}"
     SHF.addFilterOpts 'resampler' 'soxr'
     EWS.echoRead 'resampler=soxr'
-    SHU.readInt 'SoXR precision in bits' 1 64
+    SHU.readInt 'SoXR precision in bits' 15 33
     (( ${#REPLY} )) && SHF.addFilterOpts 'precision' "${REPLY}"
   }
   SHU.readOpt SHM_FMT_SAMPLE 'sample format'

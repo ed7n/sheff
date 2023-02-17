@@ -78,7 +78,7 @@ SHU.readTime() {
   while true; do
     EWS.readAndTrim
     (( ${#REPLY} == 0 )) \
-        || [[ "${REPLY}" == ?(-)?(?([[:digit:]][[:digit:]]:)[[:digit:]][[:digit:]]:[[:digit:]][[:digit:]]?(.+([[:digit:]]))|+([[:digit:]])?(.+([[:digit:]]))?(s|ms|us)) ]] \
+        || [[ "${REPLY}" == ?(-)?(?(?([[:digit:]])[[:digit:]]:)?([[:digit:]])[[:digit:]]:?([[:digit:]])[[:digit:]]?(.+([[:digit:]]))|+([[:digit:]])?(.+([[:digit:]]))?(s|ms|us)) ]] \
         && break
   done
 }

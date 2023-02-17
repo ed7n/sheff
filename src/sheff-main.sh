@@ -236,35 +236,41 @@ SHF.doInPath() {
 
 # Page: ≡ Menu.
 SHF.doMenu() {
-  echo -e "${ews[name]}"' '"${ews[sign]}"'\n——'"${ews[desc]}"'\n
-Select page.
-[1] Input Path
-[2] Preset
-[3] Video Encoder
-[4] Audio Encoder
-[5] Output Path
-[6] Build + Run
-[7] Video Options
-[8]     ~ Filters
-[9] Audio Options
-[a]     ~ Filters
-[b] Main Options
-[v] Variables
-[0] Quit'
+  shfPag=
   while true; do
-    EWS.readAndTrim
-    (( ${#REPLY} )) && {
-      EWS.isInt 0x"${REPLY}" && EWS.isWithin 0x"${REPLY}" 1 0xb && {
-        (( shfPag = 0x${REPLY} ))
-        break
-      } || case "${REPLY}" in
-        'v' )
-          declare -p shfOpas shfOpms shfOpvs shfOfas shfOfos shfOfvs shfCmd \
-              shfOip shfOop shfOwa shfOwv shfPag IFS ;;
-        '0' )
-          EWS.exit "${EWS_SCES}" ;;
-      esac
-    }
+    echo -e "${ews[name]}"' '"${ews[sign]}"'\n——'"${ews[desc]}"'\n
+Select page.
+[i]  Input Path
+[p]  Preset
+[ve] Video Encoder
+[ae] Audio Encoder
+[o]  Output Path
+[r]  Build + Run
+[vo] Video Options
+[vf]     ~ Filters
+[ao] Audio Options
+[af]     ~ Filters
+[m]  Main Options
+[v]  Variables
+[q]  Quit'
+    while true; do
+      EWS.readAndTrim
+      (( ${#REPLY} )) && {
+        EWS.isInt "${REPLY}" && EWS.isWithin "${REPLY}" 1 11 \
+            && (( shfPag = REPLY )) || case "${REPLY}" in
+          'v' )
+            declare -p shfOpas shfOpms shfOpvs shfOfas shfOfos shfOfvs shfCmd \
+                shfOip shfOop shfOwa shfOwv shfPag IFS
+            break ;;
+          'q' )
+            EWS.exit "${EWS_SCES}" ;;
+          * )
+            shfPag="${SHF_K2P[${REPLY}]}"
+            (( ${#shfPag} )) || continue ;;
+        esac
+        return
+      }
+    done
   done
 }
 

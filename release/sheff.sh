@@ -4,13 +4,16 @@
 
 {
   declare -p ews || declare -A ews=([base]="${0%/*}" [exec]="${0}" \
-      [name]='SheFF' [sign]='u0r0 by Brendon, 12/31/2022.' \
+      [name]='SheFF' [sign]='u0r1 by Brendon, 02/17/2023.' \
       [desc]='Interactive FFmpeg frontend. https://ed7n.github.io/sheff')
 } &> /dev/null
 
 # Executable.
 readonly SHF_EXE='ffmpeg'
 
+# Key to page.
+readonly -A SHF_K2P=([i]=1 [p]=2 [ve]=3 [ae]=4 [o]=5 [r]=6 [vo]=7 [vf]=8 \
+    [ao]=9 [af]=10 [m]=11)
 # Audio, main, and video output options.
 declare -A shfOpas shfOpms shfOpvs
 # Audio and video filters and filter options.
@@ -123,7 +126,7 @@ EWS.mapStr() {
 }
 
 EWS.readAndTrim() {
-  read -erp '> ' REPLY
+  read -ep '> ' REPLY
   EWS.strTrim REPLY
 }
 
@@ -236,7 +239,7 @@ SHU.readTime() {
   while true; do
     EWS.readAndTrim
     (( ${#REPLY} == 0 )) \
-        || [[ "${REPLY}" == ?(-)?(?([[:digit:]][[:digit:]]:)[[:digit:]][[:digit:]]:[[:digit:]][[:digit:]]?(.+([[:digit:]]))|+([[:digit:]])?(.+([[:digit:]]))?(s|ms|us)) ]] \
+        || [[ "${REPLY}" == ?(-)?(?(?([[:digit:]])[[:digit:]]:)?([[:digit:]])[[:digit:]]:?([[:digit:]])[[:digit:]]?(.+([[:digit:]]))|+([[:digit:]])?(.+([[:digit:]]))?(s|ms|us)) ]] \
         && break
   done
 }
@@ -340,7 +343,7 @@ SHM.doAresample() {
     SHF.addFilterOpts 'out_sample_rate' "${REPLY}"
     SHF.addFilterOpts 'resampler' 'soxr'
     EWS.echoRead 'resampler=soxr'
-    SHU.readInt 'SoXR precision in bits' 1 64
+    SHU.readInt 'SoXR precision in bits' 15 33
     (( ${#REPLY} )) && SHF.addFilterOpts 'precision' "${REPLY}"
   }
   SHU.readOpt SHM_FMT_SAMPLE 'sample format'
@@ -872,35 +875,41 @@ SHF.doInPath() {
 
 # Page: ≡ Menu.
 SHF.doMenu() {
-  echo -e "${ews[name]}"' '"${ews[sign]}"'\n——'"${ews[desc]}"'\n
-Select page.
-[1] Input Path
-[2] Preset
-[3] Video Encoder
-[4] Audio Encoder
-[5] Output Path
-[6] Build + Run
-[7] Video Options
-[8]     ~ Filters
-[9] Audio Options
-[a]     ~ Filters
-[b] Main Options
-[v] Variables
-[0] Quit'
+  shfPag=
   while true; do
-    EWS.readAndTrim
-    (( ${#REPLY} )) && {
-      EWS.isInt 0x"${REPLY}" && EWS.isWithin 0x"${REPLY}" 1 0xb && {
-        (( shfPag = 0x${REPLY} ))
-        break
-      } || case "${REPLY}" in
-        'v' )
-          declare -p shfOpas shfOpms shfOpvs shfOfas shfOfos shfOfvs shfCmd \
-              shfOip shfOop shfOwa shfOwv shfPag IFS ;;
-        '0' )
-          EWS.exit "${EWS_SCES}" ;;
-      esac
-    }
+    echo -e "${ews[name]}"' '"${ews[sign]}"'\n——'"${ews[desc]}"'\n
+Select page.
+[i]  Input Path
+[p]  Preset
+[ve] Video Encoder
+[ae] Audio Encoder
+[o]  Output Path
+[r]  Build + Run
+[vo] Video Options
+[vf]     ~ Filters
+[ao] Audio Options
+[af]     ~ Filters
+[m]  Main Options
+[v]  Variables
+[q]  Quit'
+    while true; do
+      EWS.readAndTrim
+      (( ${#REPLY} )) && {
+        EWS.isInt "${REPLY}" && EWS.isWithin "${REPLY}" 1 11 \
+            && (( shfPag = REPLY )) || case "${REPLY}" in
+          'v' )
+            declare -p shfOpas shfOpms shfOpvs shfOfas shfOfos shfOfvs shfCmd \
+                shfOip shfOop shfOwa shfOwv shfPag IFS
+            break ;;
+          'q' )
+            EWS.exit "${EWS_SCES}" ;;
+          * )
+            shfPag="${SHF_K2P[${REPLY}]}"
+            (( ${#shfPag} )) || continue ;;
+        esac
+        return
+      }
+    done
   done
 }
 

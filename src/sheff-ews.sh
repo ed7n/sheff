@@ -89,7 +89,7 @@ EWS.mapStr() {
 }
 
 EWS.readAndTrim() {
-  read -erp '> ' REPLY
+  read -ep '> ' REPLY
   EWS.strTrim REPLY
 }
 

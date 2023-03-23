@@ -20,7 +20,7 @@ readonly -a SHF_WRITERS_A=(
   'aac' 'flac' 'libmp3lame' 'libopus' 'libtwolame' 'libvorbis'
 )
 readonly -a SHF_WRITERS_V=(
-  'ffv1' 'mjpeg' 'libtheora' 'libvpx' 'libx264' 'libxvid'
+  'ffv1' 'mjpeg' 'libtheora' 'libvpx' 'libvpx-vp9' 'libx264' 'libx265' 'libxvid'
 )
 readonly -a SHM_ARESAMPLE_DITHER=(
   'rectangular' 'triangular' 'triangular_hp' 'modified_e_weighted' 'shibata'
@@ -199,7 +199,26 @@ SHM.doLibvpx() {
       && SHF.addWriterOpts 'v' 'deadline' "${SHM_VP8_DEADLINE[${REPLY}]}"
   SHU.readInt 'quality-over-speed ratio modifier' -16 16
   (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'cpu-used' "${REPLY}"
-  SHM.doWiseman
+}
+
+SHM.doLibvpx-vp9() {
+  echo 'Encode losslessly?'
+  SHU.readBoolOrBlank
+  (( ${#REPLY} )) && {
+    SHF.addWriterOpts 'v' 'lossless' 1 || :
+  } || {
+    SHU.readInt 'constant quality' 0 63
+    (( ${#REPLY} )) && {
+      SHF.addWriterOpts 'v' 'crf' "${REPLY}"
+      SHF.addWriterOpts 'v' 'b:v' 0
+      EWS.echoRead '-b:v 0'
+    }
+  }
+  SHU.readOpt SHM_VP8_DEADLINE 'deadline'
+  (( ${#REPLY} )) \
+      && SHF.addWriterOpts 'v' 'deadline' "${SHM_VP8_DEADLINE[${REPLY}]}"
+  SHU.readInt 'quality-over-speed ratio modifier' -16 16
+  (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'cpu-used' "${REPLY}"
 }
 
 SHM.doLibvorbis() {
@@ -210,12 +229,22 @@ SHM.doLibx264() {
   SHU.readInt 'constant rate factor' 0 63
   (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'crf' "${REPLY}"
   SHU.readOpt SHM_X264_PRESET 'preset'
-  (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'preset' "${SHM_X264_PRESET[${REPLY}]}"
-  SHM.doWiseman
+  (( ${#REPLY} )) \
+      && SHF.addWriterOpts 'v' 'preset' "${SHM_X264_PRESET[${REPLY}]}"
+}
+
+SHM.doLibx265() {
+  echo 'Encode losslessly?'
+  SHU.readBoolOrBlank
   (( ${#REPLY} )) && {
-    SHF.addWriterOpts 'v' 'flags' '+mv4+aic'
-    EWS.echoRead '-flags +mv4+aic'
+    SHF.addWriterOpts 'v' 'x265-params' 'lossless='"${REPLY}" || :
+  } || {
+    SHU.readInt 'constant rate factor' 0 51
+    (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'crf' "${REPLY}"
   }
+  SHU.readOpt SHM_X264_PRESET 'preset'
+  (( ${#REPLY} )) \
+      && SHF.addWriterOpts 'v' 'preset' "${SHM_X264_PRESET[${REPLY}]}"
 }
 
 SHM.doLibxvid() {
@@ -351,7 +380,7 @@ SHM.doWiseman() {
   echo 'Use slowest options?'
   SHU.readBoolOrBlank
   (( ${#REPLY} )) && {
-    SHF.addWriterOpts "${SHM_WISEMAN_V[@]}"
+    SHF.addWriterOpts 'v' "${SHM_WISEMAN_V[@]}"
     EWS.echoRead \
         '-cmp rd -dct faan -mbcmp rd -mbd rd -precmp rd -subcmp rd -trellis 2'
   }

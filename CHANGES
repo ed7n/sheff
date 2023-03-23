@@ -2,6 +2,17 @@ SheFF: Changes
 
 —Update 0
 
+——Revision 2, 03/23/2023.
+- `libvpx-vp9`.
+- `libx265`.
+- `Probe Input`.
+  - Uses `ffprobe`.
+- Break before and after `Variables`.
+- Fixed wiseman ("slowest options") not added to encoder options.
+- Moved `Preset` menu key to [t].
+  - [p] is reassigned to `Probe Input`.
+- Removed wiseman from `libvpx` and `libx264`.
+
 ——Revision 1, 02/17/2023.
 - Abbreviative key mapping in main menu.
 - Fixed backslash escapes with `readAndTrim`.

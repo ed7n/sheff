@@ -4,16 +4,18 @@
 
 {
   declare -p ews || declare -A ews=([base]="${0%/*}" [exec]="${0}" \
-      [name]='SheFF' [sign]='u0r1 by Brendon, 02/17/2023.' \
+      [name]='SheFF' [sign]='u0r2 by Brendon, 03/23/2023.' \
       [desc]='Interactive FFmpeg frontend. https://ed7n.github.io/sheff')
 } &> /dev/null
 
 # Executable.
 readonly SHF_EXE='ffmpeg'
+# Prober executable
+readonly SHF_EXP='ffprobe'
 
 # Key to page.
-readonly -A SHF_K2P=([i]=1 [p]=2 [ve]=3 [ae]=4 [o]=5 [r]=6 [vo]=7 [vf]=8 \
-    [ao]=9 [af]=10 [m]=11)
+readonly -A SHF_K2P=([i]=1 [t]=2 [ve]=3 [ae]=4 [o]=5 [r]=6 [vo]=7 [vf]=8 \
+    [ao]=9 [af]=10 [mo]=11)
 # Audio, main, and video output options.
 declare -A shfOpas shfOpms shfOpvs
 # Audio and video filters and filter options.
@@ -288,7 +290,8 @@ readonly -a SHF_WRITERS_A=(
   'aac' 'flac' 'libmp3lame' 'libopus' 'libtwolame' 'libvorbis'
 )
 readonly -a SHF_WRITERS_V=(
-  'ffv1' 'mjpeg' 'libtheora' 'libvpx' 'libx264' 'libxvid'
+  'ffv1' 'mjpeg' 'libtheora' 'libvpx' 'libvpx-vp9' 'libx264' 'libx264rgb'
+  'libx265' 'libxvid'
 )
 readonly -a SHM_ARESAMPLE_DITHER=(
   'rectangular' 'triangular' 'triangular_hp' 'modified_e_weighted' 'shibata'
@@ -467,7 +470,26 @@ SHM.doLibvpx() {
       && SHF.addWriterOpts 'v' 'deadline' "${SHM_VP8_DEADLINE[${REPLY}]}"
   SHU.readInt 'quality-over-speed ratio modifier' -16 16
   (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'cpu-used' "${REPLY}"
-  SHM.doWiseman
+}
+
+SHM.doLibvpx-vp9() {
+  echo 'Encode losslessly?'
+  SHU.readBoolOrBlank
+  (( ${#REPLY} )) && {
+    SHF.addWriterOpts 'v' 'lossless' 1 || :
+  } || {
+    SHU.readInt 'constant quality' 0 63
+    (( ${#REPLY} )) && {
+      SHF.addWriterOpts 'v' 'crf' "${REPLY}"
+      SHF.addWriterOpts 'v' 'b:v' 0
+      EWS.echoRead '-b:v 0'
+    }
+  }
+  SHU.readOpt SHM_VP8_DEADLINE 'deadline'
+  (( ${#REPLY} )) \
+      && SHF.addWriterOpts 'v' 'deadline' "${SHM_VP8_DEADLINE[${REPLY}]}"
+  SHU.readInt 'quality-over-speed ratio modifier' -16 16
+  (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'cpu-used' "${REPLY}"
 }
 
 SHM.doLibvorbis() {
@@ -478,12 +500,26 @@ SHM.doLibx264() {
   SHU.readInt 'constant rate factor' 0 63
   (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'crf' "${REPLY}"
   SHU.readOpt SHM_X264_PRESET 'preset'
-  (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'preset' "${SHM_X264_PRESET[${REPLY}]}"
-  SHM.doWiseman
+  (( ${#REPLY} )) \
+      && SHF.addWriterOpts 'v' 'preset' "${SHM_X264_PRESET[${REPLY}]}"
+}
+
+SHM.doLibx264rgb() {
+  SHM.doLibx264 "${@}"
+}
+
+SHM.doLibx265() {
+  echo 'Encode losslessly?'
+  SHU.readBoolOrBlank
   (( ${#REPLY} )) && {
-    SHF.addWriterOpts 'v' 'flags' '+mv4+aic'
-    EWS.echoRead '-flags +mv4+aic'
+    SHF.addWriterOpts 'v' 'x265-params' 'lossless='"${REPLY}" || :
+  } || {
+    SHU.readInt 'constant rate factor' 0 51
+    (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'crf' "${REPLY}"
   }
+  SHU.readOpt SHM_X264_PRESET 'preset'
+  (( ${#REPLY} )) \
+      && SHF.addWriterOpts 'v' 'preset' "${SHM_X264_PRESET[${REPLY}]}"
 }
 
 SHM.doLibxvid() {
@@ -619,7 +655,7 @@ SHM.doWiseman() {
   echo 'Use slowest options?'
   SHU.readBoolOrBlank
   (( ${#REPLY} )) && {
-    SHF.addWriterOpts "${SHM_WISEMAN_V[@]}"
+    SHF.addWriterOpts 'v' "${SHM_WISEMAN_V[@]}"
     EWS.echoRead \
         '-cmp rd -dct faan -mbcmp rd -mbd rd -precmp rd -subcmp rd -trellis 2'
   }
@@ -880,7 +916,7 @@ SHF.doMenu() {
     echo -e "${ews[name]}"' '"${ews[sign]}"'\n——'"${ews[desc]}"'\n
 Select page.
 [i]  Input Path
-[p]  Preset
+[t]  Preset
 [ve] Video Encoder
 [ae] Audio Encoder
 [o]  Output Path
@@ -889,7 +925,8 @@ Select page.
 [vf]     ~ Filters
 [ao] Audio Options
 [af]     ~ Filters
-[m]  Main Options
+[mo] Main Options
+[p]  Probe Input
 [v]  Variables
 [q]  Quit'
     while true; do
@@ -897,9 +934,18 @@ Select page.
       (( ${#REPLY} )) && {
         EWS.isInt "${REPLY}" && EWS.isWithin "${REPLY}" 1 11 \
             && (( shfPag = REPLY )) || case "${REPLY}" in
+          'p' | 'v' )
+            EWS.break ;;&
+          'p' )
+            "${SHF_EXP}" -hide_banner "${shfOip}" ;;&
           'v' )
             declare -p shfOpas shfOpms shfOpvs shfOfas shfOfos shfOfvs shfCmd \
-                shfOip shfOop shfOwa shfOwv shfPag IFS
+                shfOip shfOop shfOwa shfOwv shfPag IFS ;;&
+          'p' | 'v' )
+            EWS.break ;;&
+          'p' )
+            continue ;;
+          'v' )
             break ;;
           'q' )
             EWS.exit "${EWS_SCES}" ;;
@@ -1024,7 +1070,7 @@ You will start at either the Preset or Input Path page. Follow the prompts to
 build your FFmpeg command. You can skip most prompts with a blank. You can break
 the flow and jump to any page first by selecting ≡ Menu whenever possible. The
 main menu is also the only page from which options and filters can be accessed.'
-  exit 0
+  exit "${EWS_SCES}"
 }
 declare -p SHF_FILTERS_A SHF_FILTERS_V SHF_OPTIONS_A SHF_OPTIONS_V SHF_PRESETS \
     SHF_WRITERS_A SHF_WRITERS_V &> /dev/null \

@@ -241,7 +241,7 @@ SHF.doMenu() {
     echo -e "${ews[name]}"' '"${ews[sign]}"'\n——'"${ews[desc]}"'\n
 Select page.
 [i]  Input Path
-[p]  Preset
+[t]  Preset
 [ve] Video Encoder
 [ae] Audio Encoder
 [o]  Output Path
@@ -250,7 +250,8 @@ Select page.
 [vf]     ~ Filters
 [ao] Audio Options
 [af]     ~ Filters
-[m]  Main Options
+[mo] Main Options
+[p]  Probe Input
 [v]  Variables
 [q]  Quit'
     while true; do
@@ -258,9 +259,18 @@ Select page.
       (( ${#REPLY} )) && {
         EWS.isInt "${REPLY}" && EWS.isWithin "${REPLY}" 1 11 \
             && (( shfPag = REPLY )) || case "${REPLY}" in
+          'p' | 'v' )
+            EWS.break ;;&
+          'p' )
+            "${SHF_EXP}" -hide_banner "${shfOip}" ;;&
           'v' )
             declare -p shfOpas shfOpms shfOpvs shfOfas shfOfos shfOfvs shfCmd \
-                shfOip shfOop shfOwa shfOwv shfPag IFS
+                shfOip shfOop shfOwa shfOwv shfPag IFS ;;&
+          'p' | 'v' )
+            EWS.break ;;&
+          'p' )
+            continue ;;
+          'v' )
             break ;;
           'q' )
             EWS.exit "${EWS_SCES}" ;;
@@ -385,7 +395,7 @@ You will start at either the Preset or Input Path page. Follow the prompts to
 build your FFmpeg command. You can skip most prompts with a blank. You can break
 the flow and jump to any page first by selecting ≡ Menu whenever possible. The
 main menu is also the only page from which options and filters can be accessed.'
-  exit 0
+  exit "${EWS_SCES}"
 }
 declare -p SHF_FILTERS_A SHF_FILTERS_V SHF_OPTIONS_A SHF_OPTIONS_V SHF_PRESETS \
     SHF_WRITERS_A SHF_WRITERS_V &> /dev/null \

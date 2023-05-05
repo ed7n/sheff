@@ -123,7 +123,7 @@ Edit Mode. [Enter] to save.'
             read -eri "${shfCmd}" shfCmd
             EWS.break
             shfEdt='edt'
-            shfRan='' ;;
+            shfRan= ;;
           'r' )
             EWS.break
             eval "${shfCmd}"

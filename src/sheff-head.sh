@@ -1,6 +1,6 @@
 {
   declare -p ews || declare -A ews=([base]="${0%/*}" [exec]="${0}" \
-      [name]='SheFF' [sign]='u0r2 by Brendon, 03/23/2023.' \
+      [name]='SheFF' [sign]='u0r3 by Brendon, 05/05/2023.' \
       [desc]='Interactive FFmpeg frontend. https://ed7n.github.io/sheff')
 } &> /dev/null
 

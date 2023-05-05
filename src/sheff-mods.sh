@@ -1,5 +1,5 @@
 readonly -a SHF_FILTERS_A=(
-  'aresample' 'volume' 'mono'
+  'aresample' 'lowpass' 'volume' 'mono'
 )
 readonly -a SHF_FILTERS_V=(
   'fps' 'hqdn3d' 'nlmeans' 'scale' 'yadif'
@@ -20,7 +20,8 @@ readonly -a SHF_WRITERS_A=(
   'aac' 'flac' 'libmp3lame' 'libopus' 'libtwolame' 'libvorbis'
 )
 readonly -a SHF_WRITERS_V=(
-  'ffv1' 'mjpeg' 'libtheora' 'libvpx' 'libvpx-vp9' 'libx264' 'libx265' 'libxvid'
+  'ffv1' 'mjpeg' 'libsvtav1' 'libtheora' 'libvpx' 'libvpx-vp9' 'libx264' \
+  'libx265' 'libxvid'
 )
 readonly -a SHM_ARESAMPLE_DITHER=(
   'rectangular' 'triangular' 'triangular_hp' 'modified_e_weighted' 'shibata'
@@ -50,6 +51,9 @@ readonly -a SHM_WISEMAN_V=(
 readonly -a SHM_X264_PRESET=(
   'ultrafast' 'medium' 'slow' 'slower' 'veryslow' 'placebo'
 )
+readonly -a SHM_X264_PROFILE=(
+  'baseline' 'main' 'high' 'high10' 'high422' 'high444'
+)
 readonly -a SHM_YADIF_DEINT=(
   'all' 'interlaced'
 )
@@ -73,10 +77,17 @@ SHM.doAresample() {
   SHU.readInt 'sample rate in Hz' 1 48000
   (( ${#REPLY} )) && {
     SHF.addFilterOpts 'out_sample_rate' "${REPLY}"
-    SHF.addFilterOpts 'resampler' 'soxr'
-    EWS.echoRead 'resampler=soxr'
-    SHU.readInt 'SoXR precision in bits' 15 33
-    (( ${#REPLY} )) && SHF.addFilterOpts 'precision' "${REPLY}"
+    echo 'Simulate nearest neighbor?'
+    SHU.readBoolOrBlank
+    (( ${#REPLY} )) && {
+      SHF.addFilterOpts 'filter_size' '0' 'phase_shift' '0'
+      EWS.echoRead 'filter_size=0:phase_shift=0' || :
+    } || {
+      SHF.addFilterOpts 'resampler' 'soxr'
+      EWS.echoRead 'resampler=soxr'
+      SHU.readInt 'SoXR precision in bits' 15 33
+      (( ${#REPLY} )) && SHF.addFilterOpts 'precision' "${REPLY}"
+    }
   }
   SHU.readOpt SHM_FMT_SAMPLE 'sample format'
   (( ${#REPLY} )) && {
@@ -180,6 +191,16 @@ SHM.doLibopus() {
   SHM.doBitrate 'audio' 6 510
 }
 
+SHM.doLibsvtav1() {
+  SHU.readInt 'constant rate factor' 0 63
+  (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'crf' "${REPLY}"
+  SHU.readInt 'encoding speed' 0 13
+  (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'preset' "${REPLY}"
+  SHU.readInt 'film grain synthesis level' 1 50
+  (( ${#REPLY} )) \
+      && SHF.addWriterOpts 'v' 'svtav1-params film-grain='"${REPLY}"
+}
+
 SHM.doLibtheora() {
   SHM.doQuality 'video' 1 10
   SHM.doWiseman
@@ -226,11 +247,17 @@ SHM.doLibvorbis() {
 }
 
 SHM.doLibx264() {
+  echo 'Encode in RGB?'
+  SHU.readBoolOrBlank
+  (( ${#REPLY} )) && shfOwv+='rgb'
   SHU.readInt 'constant rate factor' 0 63
   (( ${#REPLY} )) && SHF.addWriterOpts 'v' 'crf' "${REPLY}"
   SHU.readOpt SHM_X264_PRESET 'preset'
   (( ${#REPLY} )) \
       && SHF.addWriterOpts 'v' 'preset' "${SHM_X264_PRESET[${REPLY}]}"
+  SHU.readOpt SHM_X264_PROFILE 'profile'
+  (( ${#REPLY} )) \
+      && SHF.addWriterOpts 'v' 'profile:v' "${SHM_X264_PROFILE[${REPLY}]}"
 }
 
 SHM.doLibx265() {
@@ -254,6 +281,14 @@ SHM.doLibxvid() {
     SHF.addWriterOpts 'v' 'flags' '+mv4+aic'
     EWS.echoRead '-flags +mv4+aic'
   }
+}
+
+SHM.doLowpass() {
+  SHU.readInt 'cutoff in Hz' 1 20000
+  (( ${#REPLY} )) && SHF.addFilterOpts 'f' "${REPLY}"
+  SHU.readInt 'poles count' 1 2
+  (( ${#REPLY} )) && SHF.addFilterOpts 'p' "${REPLY}"
+  SHF.hasFilterOpts && SHF.addFilter 'a' 'lowpass'
 }
 
 SHM.doMjpeg() {

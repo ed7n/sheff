@@ -2,7 +2,15 @@ SheFF: Changes
 
 —Update 0
 
+——Revision 3, 05/05/2023.
+- `aresample` nearest neighbor simulation.
+- `libsvtav1`.
+- `lowpass`.
+- Moved `libx264rgb` as option of `libx264`.
+
 ——Revision 2, 03/23/2023.
+- `libx264rgb`.
+  - By accident.
 - `libvpx-vp9`.
 - `libx265`.
 - `Probe Input`.

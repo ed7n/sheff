@@ -1,6 +1,6 @@
 {
   declare -p ews || declare -A ews=([base]="${0%/*}" [exec]="${0}" \
-      [name]='SheFF' [sign]='u0r3 by Brendon, 05/05/2023.' \
+      [name]='SheFF' [sign]='u0r4 by Brendon, 06/02/2024.' \
       [desc]='Interactive FFmpeg frontend. https://ed7n.github.io/sheff')
 } &> /dev/null
 
@@ -28,5 +28,7 @@ shfOwa=
 shfOwv=
 # Page.
 shfPag=0
+# Last page.
+shfPal=0
 # For use in array iterations.
 IFS=' '

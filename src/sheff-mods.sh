@@ -14,7 +14,7 @@ readonly -a SHF_OPTIONS_V=(
   'aspect' 'display' 'g' 'noautorotate'
 )
 readonly -a SHF_PRESETS=(
-  'web-hd' 'web-sd' 'ntsc-dvd' 'ntsc-vcd' 'ntsc-svcd'
+  'web-hd' 'web-sd' 'ntsc-dvd' 'ntsc-vcd' 'ntsc-svcd' 'wav'
 )
 readonly -a SHF_WRITERS_A=(
   'aac' 'flac' 'libmp3lame' 'libopus' 'libtwolame' 'libvorbis'
@@ -392,6 +392,22 @@ SHM.doVolume() {
   (( ${#REPLY} )) && {
     SHF.addFilterOpts 'volume' "${REPLY}"'dB'
     SHF.addFilter 'a' 'volume'
+  }
+}
+
+SHM.doWav() {
+  SHF.addWriterOpts 'v' 'vn'
+  (( ${#shfOop} )) && {
+    shfOop="${shfOop%.wav}"'.wav'
+    shfPag=6 || :
+  } || {
+    (( ${#shfOip} )) && {
+      shfOop="${shfOip%.wav}"'.wav'
+      shfPag=6 || :
+    }
+  } || {
+    echo 'No file.'
+    shfPag=1
   }
 }
 

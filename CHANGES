@@ -2,6 +2,10 @@ SheFF: Changes
 
 —Update 0
 
+——Revision 4, 06/02/2024.
+- `wav` preset.
+- Fixed page advance oversight that prevents jumping to the first.
+
 ——Revision 3, 05/05/2023.
 - `aresample` nearest neighbor simulation.
 - `libsvtav1`.

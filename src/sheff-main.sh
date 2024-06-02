@@ -362,7 +362,7 @@ Select preset, or blank for manual setting.'
       EWS.isInt "${REPLY}" && EWS.isWithin "${REPLY}" 1 ${#SHF_PRESETS[@]} && {
         SHF.rubAvOpts
         SHM.do"${SHF_PRESETS[$(( REPLY - 1 ))]@u}"
-        shfPag=4 || :
+        (( shfPag == 2 )) && shfPag=5 || :
       } || case "${REPLY}" in
         'c' )
           SHF.rubAvOpts ;;
@@ -414,6 +414,7 @@ You can still save your command and run it later.'
 echo -e 'Working directory:\n  '"$(pwd)"
 (( ${#shfOip} )) && echo -e 'Input path:\n  '"${1}"
 while true; do
+  shfPal="${shfPag}"
   case "${shfPag}" in
     '0' )
       SHF.doMenu
@@ -431,7 +432,9 @@ while true; do
     '6' )
       SHF.doBuildAndRun ;;&
     '1' | '2' | '3' | '4' | '5' | '6' )
-      (( shfPag && shfPag++ )) || SHF.doMenu ;;
+      (( shfPag == shfPal )) && {
+        (( shfPag && shfPag++ )) || SHF.doMenu
+      } ;;
     '7' )
       SHF.doOptions 'video' ;;&
     '8' )

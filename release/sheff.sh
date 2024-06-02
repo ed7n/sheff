@@ -4,7 +4,7 @@
 
 {
   declare -p ews || declare -A ews=([base]="${0%/*}" [exec]="${0}" \
-      [name]='SheFF' [sign]='u0r3 by Brendon, 05/05/2023.' \
+      [name]='SheFF' [sign]='u0r4 by Brendon, 06/02/2024.' \
       [desc]='Interactive FFmpeg frontend. https://ed7n.github.io/sheff')
 } &> /dev/null
 
@@ -32,6 +32,8 @@ shfOwa=
 shfOwv=
 # Page.
 shfPag=0
+# Last page.
+shfPal=0
 # For use in array iterations.
 IFS=' '
 
@@ -284,7 +286,7 @@ readonly -a SHF_OPTIONS_V=(
   'aspect' 'display' 'g' 'noautorotate'
 )
 readonly -a SHF_PRESETS=(
-  'web-hd' 'web-sd' 'ntsc-dvd' 'ntsc-vcd' 'ntsc-svcd'
+  'web-hd' 'web-sd' 'ntsc-dvd' 'ntsc-vcd' 'ntsc-svcd' 'wav'
 )
 readonly -a SHF_WRITERS_A=(
   'aac' 'flac' 'libmp3lame' 'libopus' 'libtwolame' 'libvorbis'
@@ -662,6 +664,22 @@ SHM.doVolume() {
   (( ${#REPLY} )) && {
     SHF.addFilterOpts 'volume' "${REPLY}"'dB'
     SHF.addFilter 'a' 'volume'
+  }
+}
+
+SHM.doWav() {
+  SHF.addWriterOpts 'v' 'vn'
+  (( ${#shfOop} )) && {
+    shfOop="${shfOop%.wav}"'.wav'
+    shfPag=6 || :
+  } || {
+    (( ${#shfOip} )) && {
+      shfOop="${shfOip%.wav}"'.wav'
+      shfPag=6 || :
+    }
+  } || {
+    echo 'No file.'
+    shfPag=1
   }
 }
 
@@ -1067,7 +1085,7 @@ Select preset, or blank for manual setting.'
       EWS.isInt "${REPLY}" && EWS.isWithin "${REPLY}" 1 ${#SHF_PRESETS[@]} && {
         SHF.rubAvOpts
         SHM.do"${SHF_PRESETS[$(( REPLY - 1 ))]@u}"
-        shfPag=4 || :
+        (( shfPag == 2 )) && shfPag=5 || :
       } || case "${REPLY}" in
         'c' )
           SHF.rubAvOpts ;;
@@ -1119,6 +1137,7 @@ You can still save your command and run it later.'
 echo -e 'Working directory:\n  '"$(pwd)"
 (( ${#shfOip} )) && echo -e 'Input path:\n  '"${1}"
 while true; do
+  shfPal="${shfPag}"
   case "${shfPag}" in
     '0' )
       SHF.doMenu
@@ -1136,7 +1155,9 @@ while true; do
     '6' )
       SHF.doBuildAndRun ;;&
     '1' | '2' | '3' | '4' | '5' | '6' )
-      (( shfPag && shfPag++ )) || SHF.doMenu ;;
+      (( shfPag == shfPal )) && {
+        (( shfPag && shfPag++ )) || SHF.doMenu
+      } ;;
     '7' )
       SHF.doOptions 'video' ;;&
     '8' )
